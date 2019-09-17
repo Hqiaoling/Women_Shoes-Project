@@ -1,0 +1,806 @@
+---
+title: "Team 7 Summary Report - Women's Shoes Dataset"
+output: html_notebook
+---
+
+*Team members: Chenran Peng, Qiaoling Huang, Shihan Li, Ziqin Ma, Elmira Ushirova*
+
+## Introduction
+The [dataset](https://www.kaggle.com/datafiniti/womens-shoes-prices#Datafiniti_Womens_Shoes_Jun19.csv) that we are using for this project is a sampled from a large dataset of Women's Shoes from Datafiniti database. It contains around 10,000 online women shoes listings from April 2015 to April 2019 (9,709 after data cleaning). The dataset has 32 columns and includes information such as `name`, `brand`, minimum and maximum `prices`, `size`, `color`, url links and additionals for each offered pair of women shoes. For the purposes of our analysis, we decided to focus mainly on some columns including `date`, `price`, `brands`, `colors`, `name` and `size`.
+
+By analyzing this dataset, we would like to identify what trends the shoes manufacturers follow nowadays and what kind of pricing strategies shoe brands have now. Our expectation is to analyze the data in different dimensions and give conclusions on shoe trends by answering these questions:
+
+1. Color
++ Popular colors among all ids.
++ Popular colors in seasons.
+2. Size
++ Which size is most popular while on sale.
+3. Time/Season
++ Which months are most of the shoes on sale in general.
++ When does retailers usually release new shoes (frequency of launching a new product).
+4. Price
++ Average price of each distinct brand listed.
++ Brands with highest prices.
++ Brands with widest price distribution.
++ Inspection on Price distributions
+
+--------
+
+## Data Cleaning
+In this project, we use the same dataset as the BA 770 one, and we have known that there are outliers. To do a more systematic analysis, we start with data cleaning and organizing. 
+
+### Step 1: Load packages
+```{r} 
+install.packages("tidyverse")
+install.packages("plotly")
+install.packages("ggplotly")
+install.packages("ggthemes")
+install.packages("gridExtra")
+# commands above can be skipped if these have already been installed on your working environment
+library(readr)
+library(tidyverse)
+library(ggplot2)
+library(plotly)
+library(dplyr)
+library(lubridate)
+library(tidyr)
+library(stringr)
+library(ggthemes)
+library(gridExtra)
+women_shoes <- read_csv("Final_version - Final_version (3).csv")
+options(stringsAsFactors = FALSE)
+```
+Check for the unique number of brands (before cleaning).
+
+```{r}
+length(unique(women_shoes$brand))
+```
+### Step 2: Clean special symbols in `brand`.
+
+```{r}
+women_shoes$brand <- tolower(women_shoes$brand)
+women_shoes$brand <- gsub("-"," ",women_shoes$brand)
+for (i in 1: nrow(women_shoes)) {
+  if (women_shoes$brand[i] == "aeorosoles") {
+    women_shoes$brand[i] <- "aerosoles"
+  }
+  if (women_shoes$brand[i] == "bamboo Brand" ) {
+    women_shoes$brand[i] <- "bamboo"
+  }
+  if (women_shoes$brand[i] ==  "baretraps") {
+    women_shoes$brand[i] <- "bare traps"
+  }
+  if (women_shoes$brand[i] == "beacon" ) {
+    women_shoes$brand[i] <- "beacon shoes"
+  }
+  if (women_shoes$brand[i] == "benjamin walk" ) {
+    women_shoes$brand[i] <- "benjamin walk dyeables"
+  }
+  if (women_shoes$brand[i] == "carlos by carlo santana" ) {
+    women_shoes$brand[i] <- "carlos"
+  } else if (women_shoes$brand[i] == "carlos by carlos santana") {
+    women_shoes$brand[i] <- "carlos"
+  }
+  if (women_shoes$brand[i] == "cat footwear") {
+    women_shoes$brand[i] <- "cat"
+  }
+  if (women_shoes$brand[i] == "charles by charles david") {
+    women_shoes$brand[i] <- "charles david"
+  }
+  if (women_shoes$brand[i] == "cityclassified" ) {
+    women_shoes$brand[i] <- "city classified"
+  }
+  if (women_shoes$brand[i] == "diba" ) {
+    women_shoes$brand[i] <- "diba true"
+  }
+  if (women_shoes$brand[i] == "dr. scholl's shoes" ) {
+    women_shoes$brand[i] <- "dr. scholl's"
+  }
+  if (women_shoes$brand[i] == "drew shoe" ) {
+    women_shoes$brand[i] <- "drew"
+  }
+  if (women_shoes$brand[i] ==  "ellie shoes") {
+    women_shoes$brand[i] <- "ellie"
+  }
+  if (women_shoes$brand[i] == "fergie footwear" ) {
+    women_shoes$brand[i] <- "fergie"
+  } else if (women_shoes$brand[i] == "fergie shoes") {
+    women_shoes$brand[i] <- "fergie"
+  }
+  if (women_shoes$brand[i] ==  "genuine grip footwear") {
+    women_shoes$brand[i] <- "genuine grip"
+  }
+  if (women_shoes$brand[i] == "j.rene") {
+    women_shoes$brand[i] <- "j. renee"
+  }
+  if (women_shoes$brand[i] == "jbu by jambu" ) {
+    women_shoes$brand[i] <- "jbu"
+  }
+  if (women_shoes$brand[i] ==  "koolaburra by ugg" ) {
+    women_shoes$brand[i] <- "koolaburra"
+  }
+  if (women_shoes$brand[i] == "l'artiste by spring step" ) {
+    women_shoes$brand[i] <- "lartiste"
+  } else if (women_shoes$brand[i] == "lartiste by spring step") {
+    women_shoes$brand[i] <- "lartiste"
+  }
+  if (women_shoes$brand[i] == "lauren by ralph lauren" ) {
+    women_shoes$brand[i] <- "ralph lauren"
+  } else if (women_shoes$brand[i] ==  "lauren ralph lauren" ) {
+    women_shoes$brand[i] <- "ralph lauren"
+  }
+  if (women_shoes$brand[i] == "life stride" ) {
+    women_shoes$brand[i] <- "lifestride"
+  } else if (women_shoes$brand[i] ==   "lifestride shoes" ) {
+    women_shoes$brand[i] <- "lifestride"
+  }
+  if (women_shoes$brand[i] == "michael michael kors" ) {
+    women_shoes$brand[i] <- "michael kors"
+  }
+  if (women_shoes$brand[i] == "pleaserusa"  ) {
+    women_shoes$brand[i] <- "pleaser usa"
+  }
+  if (women_shoes$brand[i] == "skechers work") {
+    women_shoes$brand[i] <- "skechers"
+  }
+  if (women_shoes$brand[i] ==  "soda shoes"  ) {
+    women_shoes$brand[i] <-"soda"
+  }
+  if (women_shoes$brand[i] ==   "soft style by hush puppies"  ) {
+    women_shoes$brand[i] <-"soft style"
+  }
+  if (women_shoes$brand[i] == "softwalk footwear" ) {
+    women_shoes$brand[i] <-"softwalk"
+  }
+  if (women_shoes$brand[i] ==  "sorel footwear" ) {
+    women_shoes$brand[i] <-"sorel"
+  }
+  if (women_shoes$brand[i] ==  "sperry top  sider"  ) {
+    women_shoes$brand[i] <- "sperry top sider"
+  } else if (women_shoes$brand[i] ==  "sperry" ) {
+    women_shoes$brand[i] <- "sperry top sider"
+  }
+  if (women_shoes$brand[i] ==  "summitfashions" ) {
+    women_shoes$brand[i] <-"summit fashions"
+  }
+  if (women_shoes$brand[i] ==   "toms shoes"  ) {
+    women_shoes$brand[i] <- "toms"
+  }
+  if (women_shoes$brand[i] ==  "ugg australia"  ) {
+    women_shoes$brand[i] <-"ugg"
+  }
+  if (women_shoes$brand[i] ==  "vionic with orthaheel technology" ) {
+    women_shoes$brand[i] <- "vionic"
+  }
+}
+```
+*Note:* An error occurs after running this chunk, but `brand` is still cleaned up. After cleaning the special symbol, the total number of unique `brand` is 391.
+
+```{r}
+length(unique(women_shoes$brand))
+glimpse(women_shoes)
+```
+
+--------
+## 1. Color
+### Most popular colors
+```{r}
+women_shoes %>% 
+  group_by(colors) %>% 
+  select(id,
+         colors) %>% 
+ filter(str_detect(colors, "white")) -> id_colors
+View(id_colors)
+```
+*(Still in process. We are working on the code to plot the colors)*
+
+### Popular colors in seasons
+
+We make a copy from the original dataset to work on.
+
+```{r}
+shoesw <- women_shoes
+```
+
+Then we construct 4 different dataframes for each season.
+```{r}
+
+for (i in 1:nrow(shoesw)) {
+  if (month(shoesw$dateAdded[i]) == 1 | 
+      month(shoesw$dateAdded[i]) == 2 | 
+      month(shoesw$dateAdded[i]) == 12) {
+    shoesw$season[i] = "Winter"
+  } else if (month(shoesw$dateAdded[i]) == 3 |
+             month(shoesw$dateAdded[i]) == 4 |
+             month(shoesw$dateAdded[i]) == 5) {
+    shoesw$season[i] = "Spring"
+  } else if (month(shoesw$dateAdded[i]) == 6 |
+             month(shoesw$dateAdded[i]) == 7 |
+             month(shoesw$dateAdded[i]) == 8) {
+    shoesw$season[i] = "Summer"
+  } else if (month(shoesw$dateAdded[i]) == 9 |
+             month(shoesw$dateAdded[i]) == 10 |
+             month(shoesw$dateAdded[i]) == 11) {
+    shoesw$season[i] = "Fall"
+  }
+}
+```
+An error is reported, but the code can still ran through. We can view it from the below dataframe:
+*(even though had error in January, the code can still identify it.)*
+
+```{r}
+filter(shoesw, season == "Winter", month(dateAdded) == 1 )
+```
+
+
+
+
+- Winter color:
+```{r}
+Winter <- shoesw %>% 
+          filter(season == "Winter")
+Wcolors <- unique(Winter$colors)
+Wcolors <- as.data.frame(Wcolors)
+temp <- separate_rows(Wcolors, Wcolors, sep = ",")
+summary(temp)
+Wcol <- unique(temp)
+
+
+for (i in 1:nrow(Wcol)) {
+  Wcol$count[i] <- sum(str_count(Winter$colors, pattern = Wcol$Wcolors[i]))
+}
+
+Wcol <- arrange(Wcol, desc(count))
+Wcolplot <- head(Wcol, 15)
+
+with(
+  ggplot(data = Wcolplot, mapping = aes(x = reorder(Wcolors, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "darkseagreen3")+
+  labs(x = "colors", title = "Popular colors in Winter"),
+  ggplotly())
+
+```
+As expected, the most popular color during Winter is "White".
+
+
+- Fall color:
+```{r}
+Fall <- shoesw %>% 
+          filter(season == "Fall")
+Fcolors <- unique(Fall$colors)
+Fcolors <- as.data.frame(Fcolors)
+temp <- separate_rows(Fcolors, Fcolors, sep = ",")
+summary(temp)
+Fcol <- unique(temp)
+class(Fcol)
+
+for (i in 1:nrow(Fcol)) {
+  Fcol$count[i] <- sum(str_count(Fall$colors, pattern = Fcol$Fcolors[i]))
+}
+
+Fcol <- arrange(Fcol, desc(count))
+Fcolplot <- head(Fcol, 15)
+
+with(
+ggplot(data = Fcolplot, mapping = aes(x = reorder(Fcolors, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "darkseagreen3")+
+  labs(x = "colors", title = "Popular colors in Fall"),
+ggplotly()
+)
+
+```
+The most popular color for Fall season is "Black".
+
+
+- Summer color:
+```{r}
+Summer <- shoesw %>% 
+           filter(season == "Summer")
+Sucolors <- unique(Summer$colors)
+Sucolors <- as.data.frame(Sucolors)
+temp <- separate_rows(Sucolors, Sucolors, sep = ",")
+summary(temp)
+Sucol <- unique(temp)
+class(Sucol)
+
+for (i in 1:nrow(Sucol)) {
+  Sucol$count[i] <- sum(str_count(Summer$colors, pattern = Sucol$Sucolors[i]))
+}
+
+Sucol <- arrange(Sucol, desc(count))
+Sucolplot <- head(Sucol, 15)
+
+with(
+ggplot(data = Sucolplot, mapping = aes(x = reorder(Sucolors, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "darkseagreen3")+
+  labs(x = "colors", title = "Popular colors in Summer"),
+ggplotly()
+)
+```
+The most popular color for Summer season is also "Black". In addition, "Brown", "Dusty" and "Leopard" colors are equally popular during Summer.
+
+
+
+- Spring color:
+```{r}
+Spring <- shoesw %>% 
+            filter(season == "Spring")
+Spcolors <- unique(Spring$colors)
+Spcolors <- as.data.frame(Spcolors)
+tmp <- separate_rows(Spcolors, Spcolors, sep = c(","))
+summary(tmp)
+Spcol <- unique(tmp)
+class(Spcol)
+
+for (i in 1:nrow(Spcol)) {
+  Spcol$count[i] <- sum(str_count(Spring$colors, pattern = Spcol$Spcolors[i]), na.rm = TRUE)
+}
+
+Spcol <- arrange(Spcol, desc(count))
+Spcolplot <- head(Spcol, 15)
+
+with(
+ggplot(data = Spcolplot, mapping = aes(x = reorder(Spcolors, -count), y = count)) +
+  geom_bar(stat = "identity", fill = "darkseagreen3")+
+  labs(x = "colors", title = "Popular colors in Spring"),
+ggplotly()
+)
+
+```
+The most popular color for Fall season is Black.
+
+*Note:* For some reason, we could not exactly track the "Ta" and "Patent", and we will work that out and give an explanation in the final version.
+
+Conclusion: Except for Winter, the most popular color is "Black", which is quite understandable as black shoes are considered as a common option, because they usually fit well with any other colors in a whole outfit. Winter's popular color, "White", is also understandable as people tend to match snow color in winter. 
+
+------
+
+## 2. Size
+### Most popular sizes while on sale
+```{r}
+women_shoes %>%
+ group_by(sizes) %>%
+ mutate(
+   discount = case_when(
+     str_detect(prices.offer, pattern = "off") ~ "Yes",
+     TRUE ~ "No"
+ )
+ ) %>%
+ filter(discount == "Yes") %>%
+ summarize(
+     count = n()
+   ) %>%
+ select(sizes, count) %>%
+ arrange(desc(count)) %>%
+ filter(sizes != "multiple")-> sale
+
+head(sale)
+```
+We can see from chart above that the most popular sizes while on sale are size 8 and 7.
+
+------
+
+## 3. Time/Season
+
+### When does retailers usually release new shoes (frequency of launching a new product)
+```{r}
+women_shoes$month <- months(as.Date(women_shoes$dateAdded))
+View(women_shoes)
+ggplot(women_shoes, aes(x = month)) + 
+    geom_bar(stat =  "count", na.rm = TRUE, fill = "darkseagreen3")
+```
+
+Based on the result we can see that April is the month that most brand 
+lauch their product, there are 8329 items lauched in April. 
+However, partially the reason behind it might be that our dataset is for 
+the period of April 2015 to April 2019. Nevertheless, we believe that one 
+additional month would not add such a big difference comparing to other 
+months, so it still may be implied that April is a popular month for online 
+shoes releases. It also showed that most items were released in April, 
+January and May, so we may conclude that during those 4 years most brands 
+release more summer shoes than winter shoes.
+------
+## 4. Price
+### Data cleaning continued
+For Price section, we need to further clean the dataset. We would like to change all the letters in `name` into lowercase and create a new dataframe called `new_df`.
+```{r}
+women_shoes2 <- transform(women_shoes, lowname = tolower(name))
+women_shoes2 %>% 
+  group_by(id) %>% 
+  mutate(
+    prices = (prices.amountMax + prices.amountMin)/2
+  ) %>% 
+  select(id, dateAdded, brand, lowname, prices, prices.offer) -> new_df
+head(new_df)
+```
+Then we want to find outliers through a boxplot gragh. Based on the result, we consider price over $500 are outliers.
+```{r}
+tmp <- new_df %>% 
+  ggplot(aes(x = 1, y = prices)) +
+  geom_boxplot(color = "black") +
+  coord_flip() +
+  theme_classic()
+ggplotly(tmp)
+```
+A new boxplot after we remove these outliers (prices > $500):
+```{r}
+tmp0 <- new_df %>% 
+  filter(prices < 500) %>% 
+  ggplot(aes(x = 1, y = prices)) +
+  geom_boxplot(color = "black") +
+  coord_flip() +
+  theme_classic()
+ggplotly(tmp0)
+```
+Next, we exclude outliers and extract the pattern from `name`. We also create a new column `category` specifying different categories for each pair of shoes. Finally, we extract "off" from `prices.offer` and create a new column `discount` which indicates whether the price is on sale or not. 
+```{r}
+test1 <- new_df %>% 
+  mutate(
+    category = case_when(
+      str_detect(lowname, pattern = "boot") ~ "boots",
+      str_detect(lowname, pattern = "pump") ~ "pump",
+      str_detect(lowname, pattern =  "sneaker") ~ "sneaker",
+      str_detect(lowname, pattern = "sandal") ~ "sandal",
+      str_detect(lowname, pattern = "flat") ~ "flat",
+      str_detect(lowname, pattern = "slipper") ~ "slipper",
+      str_detect(lowname, pattern = "loafer") ~ "loafer",
+      str_detect(lowname, pattern = "clog") ~ "clog"
+    ),
+    discount = case_when(
+      str_detect(prices.offer, pattern = "off") ~ "Yes",
+      TRUE ~ "No"
+    ) 
+  ) %>% 
+  filter(prices < 500)
+
+test1$category[is.na(test1$category)] <- "others"
+
+test1 %>% 
+select(id, dateAdded, brand, lowname, prices, category, discount) %>% 
+arrange(desc(prices))-> new_df2
+head(new_df2)
+```
+### Price statistics for each distinct brand
+We compute price statistics (average/median/minium/maxium) for different categories, and observe that "mobils by mephisto" has the highest average price among 389 brands.
+```{r}
+new_df2 %>% 
+  group_by(brand) %>% 
+  summarize(
+    avg_price = mean(prices),
+    med_price = median(prices),
+    max_price = max(prices),
+    min_price = min(prices),
+    count = n()
+  ) %>% 
+  arrange(desc(avg_price)) -> avg_price_by_brand
+head(avg_price_by_brand)
+dim(avg_price_by_brand)
+```
+### Average prices in different categories
+We observe that boots habe the highest count and the average price is 67 USD. Sandals have the second highest count and the average price is 57 USD. More average prices are showned as below:
+```{r}
+new_df2 %>% 
+  group_by(category) %>% 
+  summarize(
+    avg_price_by_category = mean(prices, na.rm = TRUE),
+    count= n()
+  ) %>% 
+  select(category, count, avg_price_by_category) %>% 
+  arrange(avg_price_by_category)-> avg_price_category
+head(avg_price_category, 9)
+```
+Here is the relationship among different categories, `avg_price` and count.
+```{r}
+tmp1 <- avg_price_category %>% 
+  filter(category != "others") %>% 
+  ggplot(aes(x = category, y = avg_price_by_category, size = count)) +
+  geom_point(color = "darkseagreen3") +
+  theme_bw() +
+  xlab("Category of Shoes") +
+  ylab("Average Price in Each Category") +
+  labs(title = "The Count of Average Price in Different Categories") +
+  theme(plot.title = element_text(hjust = 0))
+  
+ggplotly(tmp1)
+```
+We make a summary of prices in different categories, and surprisely see that the average price in all categories are below 100 USD. 
+```{r}
+tmp2 <- new_df2 %>% 
+  filter(category != "others") %>% 
+  ggplot(aes(x = category, y = prices)) +
+  geom_point(size = 0.5, color = "blue") +
+  stat_summary(fun.y = "mean", fun.ymin = min, fun.ymax = max, colour = "red") +
+  xlab("Category of Shoes") +
+  ylab("Prices") +
+  labs(title = "Summary of Prices in Different Categories of Shoes") +
+  theme(plot.title = element_text(hjust = 0))
+
+ggplotly(tmp2)
+```
+The distribution of average price in different brands.
+```{r}
+tmp2 <- avg_price_by_brand %>% 
+ggplot(aes(x = avg_price)) +
+  geom_histogram(binwidth = 10, fill = "darkseagreen3", color = "white") +
+  theme_classic() +
+  labs(title = "The Distribution of Average Price by Brand") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  xlab("Average Price by Distinct Brands")
+ggplotly(tmp2)
+```
+
+### Brands with highest prices
+```{r}
+
+```
+
+### Brands with widest price distribution
+```{r}
+summary(women_shoes)
+View(new_df2)
+new_df2 %>%
+  group_by(brand) %>%
+  summarize(price_range=(max(as.numeric(prices))-min(as.numeric(prices))),
+            count = n()) %>%
+  select(brand, count, price_range) %>%
+  arrange(desc(price_range)) -> df1
+View(df1)
+```
+###(Still in process with the ploting part.
+
+### Inspection on Price Distributions
+
+First, we create a copy of dataframe from the previous part.
+```{r}
+shoes_price <- new_df2
+glimpse(shoes_price)
+```
+
+#### Overall distribution
+Since the shoes with extreme values has already been foiltered out, I can directly plot the histogram for all items recorded as below.
+```{r}
+dist_all <- ggplot(shoes_price) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of shoes",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_minimal() 
+ggplotly(dist_all) %>% 
+  layout(title = list(text = paste0("Price distribution of shoes",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+```
+After removing upper extreme prices higher than $500, we noticed that the overall distribution is right-skewed, indicating the mean price is higher than median. This pattern shows the still-existing impact of high-value shoes. 
+
+#### Price distribution for common types of shoes
+We select three common types of shoes based on our fashion observations. In general, boots are less likely to be a Winter trend, while sandals are more popular in sUmmer and flats are usually popular across seasons. 
+
+- Boots and Booties:
+```{r}
+# Boots
+boots <- shoes_price %>% 
+  select(id, category, prices) %>% 
+  filter(category == "boots")
+
+dist_boots <- ggplot(boots) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of boots",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_boots) %>% 
+  layout(title = list(text = paste0("Price distribution of boots",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+```
+
+- Sandals:
+```{r}
+# Sandals
+sandals <- shoes_price %>% 
+  select(id, category, prices) %>% 
+  filter(category == "sandal")
+nrow(sandals)
+
+dist_sandals <- ggplot(sandals) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of sandals",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_sandals) %>% 
+  layout(title = list(text = paste0("Price distribution of sandals",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+
+```
+
+- Flats:
+```{r}
+# Flats
+flats <- shoes_price %>% 
+  select(id, category, prices) %>% 
+  filter(category == "flat")
+nrow(flats)
+
+dist_flats <- ggplot(flats) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of flats",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_flats) %>% 
+  layout(title = list(text = paste0("Price distribution of flats",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+```
+
+Putting graphs together in one page:
+```{r}
+grid.arrange(dist_boots, dist_flats, dist_sandals, nrow = 3)
+```
+
+In the combined grpah of three histograms, all three types have right-skewed distributions (pattern ingereted from the overall histogram). We can also notice that boots have a higher mean price than the other two types(proved by the mean table below).
+```{r}
+type <- c("boots", "flats", "sandals")
+type_mean <- c(mean(boots$prices),
+               mean(flats$prices),
+               mean(sandals$prices))
+
+data.frame(type, type_mean)
+```
+
+
+#### Price distribution for selected brands
+To select the sample among 391 distinct brands, we rank `brand` by their total number of ids listed in the dataset and the average prices of each brand, then choose top 4 with highest count. 
+```{r}
+top_brand <- shoes_price %>% 
+  group_by(brand) %>% 
+  summarize(count = n(),
+            brand_AVG = mean(prices, na.rm = TRUE)) %>% 
+  arrange(desc(count))
+top_brand
+```
+This sample includes one brand with high average price (greater than $300), one with average smaller than the dataset average, and two with mean prices close to the dataset average. We plot interactive histograms for each brand below:
+
+- Brainley C0.
+```{r}
+## brinley ##
+brinley <- shoes_price %>% 
+  select(id, brand, prices) %>% 
+  filter(str_detect(brand, "brinley co."))
+nrow(brinley)
+
+dist_brinley <- ggplot(brinley) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of Brinley Co.",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_brinley) %>% 
+  layout(title = list(text = paste0("Price distribution of Brinley Co.",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+
+```
+
+- SAS
+```{r}
+## sas ###
+sas <- shoes_price %>% 
+  select(id, brand, prices) %>% 
+  filter(str_detect(brand, "sas"))
+nrow(sas)
+
+dist_sas <- ggplot(sas) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of SAS",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_sas) %>% 
+  layout(title = list(text = paste0("Price distribution of SAS",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+
+```
+
+- Trotter
+```{r}
+## Trotter ##
+trotters <- shoes_price %>% 
+  select(id, brand, prices) %>% 
+  filter(str_detect(brand, "trotters"))
+nrow(trotters)
+
+dist_trotters <- ggplot(trotters) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of Trotters",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_trotters) %>% 
+  layout(title = list(text = paste0("Price distribution of Trotters",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+```
+
+- Propet
+```{r}
+## Propret ##
+propet <- shoes_price %>% 
+  select(id, brand, prices) %>% 
+  filter(str_detect(brand, "propet"))
+nrow(propet)
+
+dist_propet<- ggplot(propet) + 
+  geom_histogram(aes(x = prices), 
+                 binwidth = 15, 
+                 col = 'white', 
+                 fill = 'darkseagreen3') + 
+  coord_cartesian(xlim = c(0, 300)) + 
+  labs(title = "Price distribution of Propet",
+       x = "Average price",
+       y = "Number of ids") + 
+  theme_bw() 
+ggplotly(dist_propet) %>% 
+  layout(title = list(text = paste0("Price distribution of Propet",
+                                    "<br>",
+                                    "<sup>",
+                                    "price less than $500",
+                                    "</sup>")))
+```
+
+Putting histograms together:
+```{r}
+grid.arrange(dist_brinley, dist_sas, dist_trotters, dist_propet, nrow = 2)
+```
+The average prices of Brinley Co., which is the most popular brand by number stocked, is relatively even-spreaded around the mean value (36 USD). Both SAS and Trotters has right-skewed distributions. Propet also has a right-skewed distribution, though the spread of prices is not continuous compared to other three. 
+
+Given this comparision, we can conclude that a larger sample size tends to employ a more "Normal" distribution, as we have learned from statistcs class. From the business perspective, these distributions and variations among brands can reflect preferences on shoes choices. We are doing backgroud reserch on these brands and will be able to provide a more precise conclusion in the final notebook.
+
+------
+## Conclusion
+
