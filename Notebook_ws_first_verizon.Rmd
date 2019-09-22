@@ -507,14 +507,14 @@ We make a summary of prices in different categories, and surprisely see that the
 ```{r}
 tmp2 <- new_df2 %>% 
   filter(category != "others") %>% 
-  ggplot(aes(x = category, y = prices)) +
-  geom_point(size = 0.5, color = "blue") +
+  ggplot(aes(x = category, y = prices))+
   stat_summary(fun.y = "mean", fun.ymin = min, fun.ymax = max, colour = "red") +
+  geom_hline(yintercept=100, linetype="dashed", color = "lightblue")+
   xlab("Category of Shoes") +
   ylab("Prices") +
   labs(title = "Summary of Prices in Different Categories of Shoes") +
-  theme(plot.title = element_text(hjust = 0))
-
+  theme(plot.title = element_text(hjust = 0))+
+  theme_classic()
 ggplotly(tmp2)
 ```
 The distribution of average price in different brands.
