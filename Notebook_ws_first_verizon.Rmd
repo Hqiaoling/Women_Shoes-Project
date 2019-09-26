@@ -3,30 +3,28 @@ title: "Team 7 Summary Report - Women's Shoes Dataset"
 output: html_notebook
 ---
 
-*Team members: Chenran Peng, Qiaoling Huang, Shihan Li, Ziqin Ma, Elmira Ushirova*
+#### *Team members: Chenran Peng, Qiaoling Huang, Shihan Li, Ziqin Ma, Elmira Ushirova*
 
 ## Introduction
-The [dataset](https://www.kaggle.com/datafiniti/womens-shoes-prices#Datafiniti_Womens_Shoes_Jun19.csv) that we are using for this project is a sampled from a large dataset of Women's Shoes from Datafiniti database. It contains around 10,000 online women shoes listings from April 2015 to April 2019 (9,709 after data cleaning). The dataset has 32 columns and includes information such as `name`, `brand`, minimum and maximum `prices`, `size`, `color`, url links and additionals for each offered pair of women shoes. For the purposes of our analysis, we decided to focus mainly on some columns including `date`, `price`, `brands`, `colors`, `name` and `size`.
+The [dataset](https://www.kaggle.com/datafiniti/womens-shoes-prices#Datafiniti_Womens_Shoes_Jun19.csv) that we are using for this project is sampled from a large dataset of `Women's Shoes` from Datafiniti database. It contains around 10,000 online women shoes listings from April 2015 to April 2019 (9,709 after data cleaning). The dataset has 32 columns and includes information such as `name`, `brand`, minimum and maximum `prices`, `size`, `color`, url links and additionals for each offered pair of women shoes. For the purposes of our analysis, we decided to focus mainly on some columns including `date`, `price`, `brands`, `colors`, `name` and `size`.
 
-By analyzing this dataset, we would like to identify what trends the shoes manufacturers follow nowadays and what kind of pricing strategies shoe brands have now. Our expectation is to analyze the data in different dimensions and give conclusions on shoe trends by answering these questions:
+By analyzing this dataset, we would like to identify what trends the shoes manufacturers follow nowadays and what kind of pricing strategies shoe brands have now. Our expectation is to analyze the data in different dimensions and give conclusions and recommendations on shoe trends by answering these questions:
 
-1. Color
-+ Popular colors among all ids.
-+ Popular colors in seasons.
-2. Size
-+ Which size is most popular while on sale.
-3. Time/Season
-+ Which months are most of the shoes on sale in general.
-+ When does retailers usually release new shoes (frequency of launching a new product).
+1. Size
++ Most popular sizes for shoes on sale;
+2. Color
++ Popular colors among shoes;
++ Popular colors in each season;
+3. Time
++ When does retailers usually release new shoes;
 4. Price
-+ Average price of each distinct brand listed.
-+ Brands with highest prices.
-+ Brands with widest price distribution.
-+ Inspection on Price distributions
++ Brands with widest price distribution;
++ Price inspection on categories;
++ Price inspection on brands
 
 --------
 
-## Data Cleaning
+## Get started: Data cleaning
 In this project, we use the same dataset as the BA 770 one, and we have known that there are outliers. To do a more systematic analysis, we start with data cleaning and organizing. 
 
 ### Step 1: Load packages
@@ -36,7 +34,8 @@ install.packages("plotly")
 install.packages("ggplotly")
 install.packages("ggthemes")
 install.packages("gridExtra")
-# commands above can be skipped if these have already been installed on your working environment
+install.packages("ggpubr")
+# commands above can be skipped if these have already been installed on current working environment
 library(readr)
 library(tidyverse)
 library(ggplot2)
@@ -47,17 +46,17 @@ library(tidyr)
 library(stringr)
 library(ggthemes)
 library(gridExtra)
-women_shoes <- read_csv("Final_version - Final_version (3).csv")
+library(ggpubr)
+women_shoes <- Final_version_Final_version_3_
 options(stringsAsFactors = FALSE)
 ```
-Check for the unique number of brands (before cleaning).
-
+Check for the unique number of brands (before cleaning):
 ```{r}
 length(unique(women_shoes$brand))
 ```
-### Step 2: Clean special symbols in `brand`.
-
+### Step 2: Clean special symbols in `brand` and drop all NAs
 ```{r}
+women_shoes <- drop_na(women_shoes)
 women_shoes$brand <- tolower(women_shoes$brand)
 women_shoes$brand <- gsub("-"," ",women_shoes$brand)
 for (i in 1: nrow(women_shoes)) {
@@ -173,190 +172,14 @@ for (i in 1: nrow(women_shoes)) {
     women_shoes$brand[i] <- "vionic"
   }
 }
-```
-*Note:* An error occurs after running this chunk, but `brand` is still cleaned up. After cleaning the special symbol, the total number of unique `brand` is 391.
 
-```{r}
 length(unique(women_shoes$brand))
 glimpse(women_shoes)
 ```
 
 --------
-## 1. Color
-### Most popular colors
-```{r}
-women_shoes %>% 
-  group_by(colors) %>% 
-  select(id,
-         colors) %>% 
- filter(str_detect(colors, "white")) -> id_colors
-View(id_colors)
-```
-*(Still in process. We are working on the code to plot the colors)*
-
-### Popular colors in seasons
-
-We make a copy from the original dataset to work on.
-
-```{r}
-shoesw <- women_shoes
-```
-
-Then we construct 4 different dataframes for each season.
-```{r}
-
-for (i in 1:nrow(shoesw)) {
-  if (month(shoesw$dateAdded[i]) == 1 | 
-      month(shoesw$dateAdded[i]) == 2 | 
-      month(shoesw$dateAdded[i]) == 12) {
-    shoesw$season[i] = "Winter"
-  } else if (month(shoesw$dateAdded[i]) == 3 |
-             month(shoesw$dateAdded[i]) == 4 |
-             month(shoesw$dateAdded[i]) == 5) {
-    shoesw$season[i] = "Spring"
-  } else if (month(shoesw$dateAdded[i]) == 6 |
-             month(shoesw$dateAdded[i]) == 7 |
-             month(shoesw$dateAdded[i]) == 8) {
-    shoesw$season[i] = "Summer"
-  } else if (month(shoesw$dateAdded[i]) == 9 |
-             month(shoesw$dateAdded[i]) == 10 |
-             month(shoesw$dateAdded[i]) == 11) {
-    shoesw$season[i] = "Fall"
-  }
-}
-```
-An error is reported, but the code can still ran through. We can view it from the below dataframe:
-*(even though had error in January, the code can still identify it.)*
-
-```{r}
-filter(shoesw, season == "Winter", month(dateAdded) == 1 )
-```
-
-
-
-
-- Winter color:
-```{r}
-Winter <- shoesw %>% 
-          filter(season == "Winter")
-Wcolors <- unique(Winter$colors)
-Wcolors <- as.data.frame(Wcolors)
-temp <- separate_rows(Wcolors, Wcolors, sep = ",")
-summary(temp)
-Wcol <- unique(temp)
-
-
-for (i in 1:nrow(Wcol)) {
-  Wcol$count[i] <- sum(str_count(Winter$colors, pattern = Wcol$Wcolors[i]))
-}
-
-Wcol <- arrange(Wcol, desc(count))
-Wcolplot <- head(Wcol, 15)
-
-with(
-  ggplot(data = Wcolplot, mapping = aes(x = reorder(Wcolors, -count), y = count)) +
-  geom_bar(stat = "identity", fill = "darkseagreen3")+
-  labs(x = "colors", title = "Popular colors in Winter"),
-  ggplotly())
-
-```
-As expected, the most popular color during Winter is "White".
-
-
-- Fall color:
-```{r}
-Fall <- shoesw %>% 
-          filter(season == "Fall")
-Fcolors <- unique(Fall$colors)
-Fcolors <- as.data.frame(Fcolors)
-temp <- separate_rows(Fcolors, Fcolors, sep = ",")
-summary(temp)
-Fcol <- unique(temp)
-class(Fcol)
-
-for (i in 1:nrow(Fcol)) {
-  Fcol$count[i] <- sum(str_count(Fall$colors, pattern = Fcol$Fcolors[i]))
-}
-
-Fcol <- arrange(Fcol, desc(count))
-Fcolplot <- head(Fcol, 15)
-
-with(
-ggplot(data = Fcolplot, mapping = aes(x = reorder(Fcolors, -count), y = count)) +
-  geom_bar(stat = "identity", fill = "darkseagreen3")+
-  labs(x = "colors", title = "Popular colors in Fall"),
-ggplotly()
-)
-
-```
-The most popular color for Fall season is "Black".
-
-
-- Summer color:
-```{r}
-Summer <- shoesw %>% 
-           filter(season == "Summer")
-Sucolors <- unique(Summer$colors)
-Sucolors <- as.data.frame(Sucolors)
-temp <- separate_rows(Sucolors, Sucolors, sep = ",")
-summary(temp)
-Sucol <- unique(temp)
-class(Sucol)
-
-for (i in 1:nrow(Sucol)) {
-  Sucol$count[i] <- sum(str_count(Summer$colors, pattern = Sucol$Sucolors[i]))
-}
-
-Sucol <- arrange(Sucol, desc(count))
-Sucolplot <- head(Sucol, 15)
-
-with(
-ggplot(data = Sucolplot, mapping = aes(x = reorder(Sucolors, -count), y = count)) +
-  geom_bar(stat = "identity", fill = "darkseagreen3")+
-  labs(x = "colors", title = "Popular colors in Summer"),
-ggplotly()
-)
-```
-The most popular color for Summer season is also "Black". In addition, "Brown", "Dusty" and "Leopard" colors are equally popular during Summer.
-
-
-
-- Spring color:
-```{r}
-Spring <- shoesw %>% 
-            filter(season == "Spring")
-Spcolors <- unique(Spring$colors)
-Spcolors <- as.data.frame(Spcolors)
-tmp <- separate_rows(Spcolors, Spcolors, sep = c(","))
-summary(tmp)
-Spcol <- unique(tmp)
-class(Spcol)
-
-for (i in 1:nrow(Spcol)) {
-  Spcol$count[i] <- sum(str_count(Spring$colors, pattern = Spcol$Spcolors[i]), na.rm = TRUE)
-}
-
-Spcol <- arrange(Spcol, desc(count))
-Spcolplot <- head(Spcol, 15)
-
-with(
-ggplot(data = Spcolplot, mapping = aes(x = reorder(Spcolors, -count), y = count)) +
-  geom_bar(stat = "identity", fill = "darkseagreen3")+
-  labs(x = "colors", title = "Popular colors in Spring"),
-ggplotly()
-)
-
-```
-The most popular color for Fall season is Black.
-
-*Note:* For some reason, we could not exactly track the "Ta" and "Patent", and we will work that out and give an explanation in the final version.
-
-Conclusion: Except for Winter, the most popular color is "Black", which is quite understandable as black shoes are considered as a common option, because they usually fit well with any other colors in a whole outfit. Winter's popular color, "White", is also understandable as people tend to match snow color in winter. 
-
-------
-
-## 2. Size
-### Most popular sizes while on sale
+## 1. Size
+### Most popular sizes for shoes on sale
 ```{r}
 women_shoes %>%
  group_by(sizes) %>%
@@ -376,33 +199,196 @@ women_shoes %>%
 
 head(sale)
 ```
-We can see from chart above that the most popular sizes while on sale are size 8 and 7.
+We can see from chart above that the most popular sizes while on sale are size **8** and **7**.
+
+--------
+## 2. Color
+### Popular colors among shoes
+```{r}
+Idcolors <- unique(women_shoes$colors)
+Idcolors <- as.data.frame(Idcolors)
+temp <- separate_rows(Idcolors, Idcolors, sep = ",")
+summary(temp)
+Idcol <- unique(temp)
+class(Idcol)
+summary(Idcol)
+for (i in 1:nrow(Idcol)) {
+ Idcol$count[i] <- sum(str_count(women_shoes$colors, pattern = Idcol$Idcolors[i]), na.rm = TRUE)
+}
+Idcol <- arrange(Idcol, desc(count))
+Idcolplot <- head(Idcol, 10) %>%
+            filter(Idcolors !="Ta", Idcolors !="Patent"  )
+pct <- round(Idcolplot$count/sum(Idcolplot$count)*100)
+lbls <- paste(Idcolplot$Idcolors, pct)
+lbls <- paste(lbls,"%",sep="")
+pie(pct,labels = lbls, col=c("#ADDED4","#B5D4E9","#C3CED9","#C9E4B4"),
+   main="Popular colors in general")
+```
+
+**Black** and **white** take over almost 60% among all colors, and each of the rest has less than 10%.
+
+### Popular colors in each season
+We make a copy from the original dataset to work on.
+```{r}
+shoesw <- women_shoes
+summary(shoesw)
+```
+Then we construct 4 different dataframes for each season.
+```{r}
+shoesw %>% 
+  mutate(season =ifelse(month(dateAdded) %in% c(1,2,12), "Winter", 
+                         ifelse(month(dateAdded) %in% c(3,4,5), 
+                                "Spring", 
+                                ifelse(month(dateAdded) %in% c(6,7,8), 
+                                       "Summer",
+                                       "Fall")))) -> shoesw
+```
+Glimpse at data frame with new columm.
+```{r}
+glimpse(shoesw)
+```
+#### -Winter color:
+```{r}
+Winter <- shoesw %>% 
+          filter(season == "Winter")
+Wcolors <- unique(Winter$colors)
+Wcolors <- as.data.frame(Wcolors)
+temp <- separate_rows(Wcolors, Wcolors, sep = ",")
+summary(temp)
+Wcol <- unique(temp)
+
+
+for (i in 1:nrow(Wcol)) {
+  Wcol$count[i] <- sum(str_count(Winter$colors, pattern = Wcol$Wcolors[i]))
+}
+
+Wcol <- arrange(Wcol, desc(count))
+Wcolplot <- head(Wcol, 10)
+
+  ggplot(data = Wcolplot, mapping = aes(x = reorder(Wcolors, -count), y = count, fill= reorder(Wcolors, -count))) +
+  geom_bar(stat = "identity")+
+  scale_fill_manual(values = c("White" = "White", "Black" = "Black", "Blue" = "#0000FF", 
+                               "Navy" = "#000080", "Bone" = "#e3dac9", "Turquo" = "#40E0D0",
+                             "Grey" = "#808080", "Beige" = "#f5f5dc", "Natural" = "#caa472", 
+                             "Pewter" = "#8e9294")) +
+  labs(x = "colors", y = "number of listings", title = "Popular colors in Winter") +  
+  theme(legend.position="none")
+
+```
+The most popular color during Winter is "White" and “Black”. Most of those colors are of colder tones, which is quite understandable considering that winter is a cold time of the year.
+
+#### -Fall color:
+```{r}
+Fall <- shoesw %>% 
+          filter(season == "Fall")
+Fcolors <- unique(Fall$colors)
+Fcolors <- as.data.frame(Fcolors)
+temp <- separate_rows(Fcolors, Fcolors, sep = ",")
+summary(temp)
+Fcol <- unique(temp)
+class(Fcol)
+
+for (i in 1:nrow(Fcol)) {
+  Fcol$count[i] <- sum(str_count(Fall$colors, pattern = Fcol$Fcolors[i]))
+}
+
+Fcol <- arrange(Fcol, desc(count))
+Fcolplot <- head(Fcol, 11) %>% 
+            filter(Fcolors != "All Black")
+
+
+ggplot(data = Fcolplot, mapping = aes(x = reorder(Fcolors, -count), y = count, fill = reorder(Fcolors, -count))) +
+  geom_bar(stat = "identity")+
+   scale_fill_manual(values = c("Black" = "Black", "Silver" = "#C0C0C0", 
+                               "Brown" = "#A52A2A", "White" = "White", "Tan" = "#D2B48C",
+                             "Taupe" = "#b38b6d", "Periwinkle" = "#CCCCFF", 
+                             "Chocolate" = "#D2691E","Cinnamon" = "#d2691e", 
+                             "Blue" ="#0000FF")) +
+  labs(x = "colors", y = "number of listings", title = "Popular colors in Fall") +
+  theme(legend.position="none")
+
+```
+The most popular color for Fall season is "Black". The color tones look quite suitable for Fall season. 
+
+#### -Summer color:
+```{r}
+Summer <- shoesw %>% 
+           filter(season == "Summer")
+Sucolors <- unique(Summer$colors)
+Sucolors <- as.data.frame(Sucolors)
+temp <- separate_rows(Sucolors, Sucolors, sep = ",")
+summary(temp)
+Sucol <- unique(temp)
+class(Sucol)
+
+for (i in 1:nrow(Sucol)) {
+  Sucol$count[i] <- sum(str_count(Summer$colors, pattern = Sucol$Sucolors[i]))
+}
+
+Sucol <- arrange(Sucol, desc(count))
+Sucolplot <- head(Sucol, 10) %>% 
+             filter(Sucolors != "Black  Leopard")
+
+ggplot(data = Sucolplot, mapping = aes(x = reorder(Sucolors, -count), y = count, fill = reorder(Sucolors, -count))) +
+  geom_bar(stat = "identity")+
+  scale_fill_manual(values = c("Black" = "Black","Brown" = "#A52A2A", "Dusty" = "#ac9b9b", 
+                               "Leopard" = "#a37319", "White" = "White",
+                             "Taupe" = "#b38b6d", "Black Suede" = "#3d3e3c",
+                             "Beige" = "#f5f5dc", "Dusty Brown Suede" ="#A17F72")) +
+  labs(x = "colors", y = "number of listings", title = "Popular colors in Summer") +
+  theme(legend.position="none")
+```
+The most popular color for Summer season is also "Black". Which is a little bit surprising, as we would expect more bright and popping colors being the most popular ones during Summer time. Nevertheless, "Brown", "Dusty" and "Leopard" colors are equally popular during Summer. Apparently, "Leopard" print is very popular during summer time.
+
+#### -Spring color:
+```{r}
+Spring <- shoesw %>% 
+            filter(season == "Spring")
+Spcolors <- unique(Spring$colors)
+Spcolors <- as.data.frame(Spcolors)
+tmp <- separate_rows(Spcolors, Spcolors, sep = c(","))
+summary(tmp)
+Spcol <- unique(tmp)
+class(Spcol)
+
+for (i in 1:nrow(Spcol)) {
+  Spcol$count[i] <- sum(str_count(Spring$colors, pattern = Spcol$Spcolors[i]), na.rm = TRUE)
+}
+
+Spcol <- arrange(Spcol, desc(count))
+Spcolplot <- head(Spcol, 10) %>% 
+             filter(Spcolors != "Ta", Spcolors != "Patent")
+
+ggplot(data = Spcolplot, mapping = aes(x = reorder(Spcolors, -count), y = count, fill = reorder(Spcolors, -count))) +
+  geom_bar(stat = "identity")+
+  scale_fill_manual(values = c("Black" = "Black","White" = "White", "Grey" = "#808080",  
+                               "Brown" = "#A52A2A", "Red" = "#FF0000", 
+                               "Gold" = "#FFD700", "Silver" = "#C0C0C0","Beige" = "#f5f5dc"))+
+  labs(x = "colors", y = "number of listings", title = "Popular colors in Spring") +
+  theme(legend.position="none")
+```
+The most popular color for Spring season is also "Black". Also here we see more 
+
+Conclusion: Except for Winter, the most popular color is **Black**, which is quite understandable as black shoes are considered as a common option, because they usually fit well with any other colors in a whole outfit. Winter's popular color, **White**, is also understandable as people may tend to match snow color in winter. Moreover, the popular colors in seasons tend to match the tones of the seasons. 
 
 ------
-
-## 3. Time/Season
-
-### When does retailers usually release new shoes (frequency of launching a new product)
+## 3. Time
+### When does retailers usually release new shoes
 ```{r}
 women_shoes$month <- months(as.Date(women_shoes$dateAdded))
-View(women_shoes)
-ggplot(women_shoes, aes(x = month)) + 
+women_shoes$year <- year(as.Date(women_shoes$dateAdded))
+women_shoes%>%
+  filter(year == "2015") -> new_date
+ggplot(new_date, aes(x = month)) + 
     geom_bar(stat =  "count", na.rm = TRUE, fill = "darkseagreen3")
 ```
 
-Based on the result we can see that April is the month that most brand 
-lauch their product, there are 8329 items lauched in April. 
-However, partially the reason behind it might be that our dataset is for 
-the period of April 2015 to April 2019. Nevertheless, we believe that one 
-additional month would not add such a big difference comparing to other 
-months, so it still may be implied that April is a popular month for online 
-shoes releases. It also showed that most items were released in April, 
-January and May, so we may conclude that during those 4 years most brands 
-release more summer shoes than winter shoes.
-------
+We limited our dataset to only one year range as our dataset have so many missing data, for example we only have data for April and May in 2019.  Based on the result we can see that **April** and **September** are the month that most brand launch their new product follow by August, November and December. We can assume that most brand usually release their products for between two seasons. 
+
+--------
 ## 4. Price
 ### Data cleaning continued
-For Price section, we need to further clean the dataset. We would like to change all the letters in `name` into lowercase and create a new dataframe called `new_df`.
+In Price section, we need to further clean the dataset. We would like to change all the letters in `name` into lowercase and create a new dataframe called `new_df`.
 ```{r}
 women_shoes2 <- transform(women_shoes, lowname = tolower(name))
 women_shoes2 %>% 
@@ -413,7 +399,7 @@ women_shoes2 %>%
   select(id, dateAdded, brand, lowname, prices, prices.offer) -> new_df
 head(new_df)
 ```
-Then we want to find outliers through a boxplot gragh. Based on the result, we consider price over $500 are outliers.
+Then we want to find outliers through a boxplot gragh. Based on the result, we consider price over \$500 are outliers.
 ```{r}
 tmp <- new_df %>% 
   ggplot(aes(x = 1, y = prices)) +
@@ -422,7 +408,7 @@ tmp <- new_df %>%
   theme_classic()
 ggplotly(tmp)
 ```
-A new boxplot after we remove these outliers (prices > $500):
+A new boxplot after we remove these outliers (prices > \$500):
 ```{r}
 tmp0 <- new_df %>% 
   filter(prices < 500) %>% 
@@ -460,24 +446,26 @@ select(id, dateAdded, brand, lowname, prices, category, discount) %>%
 arrange(desc(prices))-> new_df2
 head(new_df2)
 ```
-### Price statistics for each distinct brand
-We compute price statistics (average/median/minium/maxium) for different categories, and observe that "mobils by mephisto" has the highest average price among 389 brands.
+
+### Brands with widest price distribution
 ```{r}
-new_df2 %>% 
-  group_by(brand) %>% 
-  summarize(
-    avg_price = mean(prices),
-    med_price = median(prices),
-    max_price = max(prices),
-    min_price = min(prices),
-    count = n()
-  ) %>% 
-  arrange(desc(avg_price)) -> avg_price_by_brand
-head(avg_price_by_brand)
-dim(avg_price_by_brand)
+summary(women_shoes)
+glimpse(new_df2)
 ```
-### Average prices in different categories
-We observe that boots habe the highest count and the average price is 67 USD. Sandals have the second highest count and the average price is 57 USD. More average prices are showned as below:
+
+```{r}
+new_df2 %>%
+  group_by(brand) %>%
+  summarize(price_range=(max(as.numeric(prices))-min(as.numeric(prices))),
+            count = n()) %>%
+  select(brand, count, price_range) %>%
+  arrange(desc(price_range)) -> df1
+head(df1,10)
+```
+Last time we have some brand that have price range for around \$5000, by working more on this dataset, we find out that there are some product sell for \$5000. We did some data cleaning on this dataset to get rid of those outliers. After done with the data cleaning, we got our result for price distribution of each brand. Here are top 10 brand that have the widest price distribution range. We can see that brands usually have price range smaller than \$350.
+
+### Price inspection on categories
+We observe that boots habe the highest count and the average price is \$67. Sandals have the second highest count and the average price is \$57. More average prices are showned as below:
 ```{r}
 new_df2 %>% 
   group_by(category) %>% 
@@ -489,7 +477,32 @@ new_df2 %>%
   arrange(avg_price_by_category)-> avg_price_category
 head(avg_price_category, 9)
 ```
-Here is the relationship among different categories, `avg_price` and count.
+We make a summary of prices in different categories, and surprisely see that the average price in all categories are below \$100. 
+```{r}
+tmp2 <- new_df2 %>% 
+  filter(category != "others") %>% 
+  ggplot(aes(x = category, y = prices)) +
+  stat_summary(fun.y = "mean", fun.ymin = min, fun.ymax = max, colour = "#7C7F91") +
+  geom_hline(yintercept = 100, linetype = "dashed", color = "red")+
+  xlab("Category of Shoes") +
+  ylab("Prices") +
+  labs(title = "Summary of Prices in Different Categories of Shoes") +
+  theme(plot.title = element_text(hjust = 0))+
+  theme_classic()
+
+ggplotly(tmp2)
+```
+The summary above shows the average price of most of categories are way lower than the median. So we decided to deep into the average price which are under \$200 in order to see what the data can tell us about. As the boxplot shows that the the most price distribution are **below \$100**, we decided to choose the sample of price less than 100 to do the further analysis. 
+```{r}
+new_df2 %>% 
+  filter(category != "others", prices < 200) %>% 
+  ggplot(aes(x = category, y = prices))+
+  geom_boxplot(color = "#7C7F91")+
+  theme_classic()+
+  labs(title = "Price Among Categories") ->price_category
+ggplotly(price_category)
+```
+Here is the comparision among different categories, `avg_price` and count. We was planning to choose the top two of highest count categories to see the price trend over the past 4 years. But we found that there are missing data for both sandal and flat before 2016. Therefore, we chose to compare the price trend for both boots and pump. 
 ```{r}
 tmp1 <- avg_price_category %>% 
   filter(category != "others") %>% 
@@ -503,304 +516,130 @@ tmp1 <- avg_price_category %>%
   
 ggplotly(tmp1)
 ```
-We make a summary of prices in different categories, and surprisely see that the average price in all categories are below 100 USD. 
+In order to see the price trend over the past 4 years, we format the date coloum to year and month, and also we computed the average price based on category and seperately filter both boots and pump category as our oberservations. In the end, we plot two lines for both category in one gragh in order to compare the price trend from time to time. As a result, we can see that the average price for pump shoes is steadily increase, and the average price for boots had a significant increase from December, 2015 to October, 2016 and them drop significantly after that until July, 2017. Overall, we can see the average price for boots is more fluctuating while pumps shoes is more stable. 
 ```{r}
-tmp2 <- new_df2 %>% 
-  filter(category != "others") %>% 
-  ggplot(aes(x = category, y = prices))+
-  stat_summary(fun.y = "mean", fun.ymin = min, fun.ymax = max, colour = "red") +
-  geom_hline(yintercept=100, linetype="dashed", color = "lightblue")+
-  xlab("Category of Shoes") +
-  ylab("Prices") +
-  labs(title = "Summary of Prices in Different Categories of Shoes") +
-  theme(plot.title = element_text(hjust = 0))+
-  theme_classic()
-ggplotly(tmp2)
+format(new_df2$dateAdded, "%Y-%m") -> new_df2$dateAdded
+new_df2 %>% 
+  group_by(dateAdded, category) %>% 
+  summarize(
+    avgprice_by_ym = mean(prices)
+  ) %>% 
+  arrange(dateAdded) -> avgprice_by_ym
+
+avgprice_by_ym %>% 
+  filter(category =="boots") ->boots
+avgprice_by_ym %>% 
+  filter(category =="pump") ->pump
+
+p = ggplot() +
+  geom_line(data = boots, aes(x = dateAdded, y = avgprice_by_ym, color = category, group = 1))+
+   geom_line(data =pump, aes(x = dateAdded, y = avgprice_by_ym, color = category, group = 1))+
+  theme_classic()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))+
+  labs(title = "Trend of Avg.Price in Both Boots and Pump")+
+  xlab("Year-Month")+
+  ylab("Average Price")
+
+ggplotly(p)
 ```
-The distribution of average price in different brands.
-```{r}
-tmp2 <- avg_price_by_brand %>% 
-ggplot(aes(x = avg_price)) +
-  geom_histogram(binwidth = 10, fill = "darkseagreen3", color = "white") +
-  theme_classic() +
-  labs(title = "The Distribution of Average Price by Brand") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  xlab("Average Price by Distinct Brands")
-ggplotly(tmp2)
-```
-
-### Brands with highest prices
-```{r}
-
-```
-
-### Brands with widest price distribution
-```{r}
-summary(women_shoes)
-View(new_df2)
-new_df2 %>%
-  group_by(brand) %>%
-  summarize(price_range=(max(as.numeric(prices))-min(as.numeric(prices))),
-            count = n()) %>%
-  select(brand, count, price_range) %>%
-  arrange(desc(price_range)) -> df1
-View(df1)
-```
-###(Still in process with the ploting part.
-
-### Inspection on Price Distributions
-
+### Price Inspection on Brand
 First, we create a copy of dataframe from the previous part.
 ```{r}
 shoes_price <- new_df2
 glimpse(shoes_price)
 ```
 
-#### Overall distribution
-Since the shoes with extreme values has already been foiltered out, I can directly plot the histogram for all items recorded as below.
-```{r}
-dist_all <- ggplot(shoes_price) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of shoes",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_minimal() 
-ggplotly(dist_all) %>% 
-  layout(title = list(text = paste0("Price distribution of shoes",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-```
-After removing upper extreme prices higher than $500, we noticed that the overall distribution is right-skewed, indicating the mean price is higher than median. This pattern shows the still-existing impact of high-value shoes. 
-
-#### Price distribution for common types of shoes
-We select three common types of shoes based on our fashion observations. In general, boots are less likely to be a Winter trend, while sandals are more popular in sUmmer and flats are usually popular across seasons. 
-
-- Boots and Booties:
-```{r}
-# Boots
-boots <- shoes_price %>% 
-  select(id, category, prices) %>% 
-  filter(category == "boots")
-
-dist_boots <- ggplot(boots) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of boots",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_boots) %>% 
-  layout(title = list(text = paste0("Price distribution of boots",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-```
-
-- Sandals:
-```{r}
-# Sandals
-sandals <- shoes_price %>% 
-  select(id, category, prices) %>% 
-  filter(category == "sandal")
-nrow(sandals)
-
-dist_sandals <- ggplot(sandals) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of sandals",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_sandals) %>% 
-  layout(title = list(text = paste0("Price distribution of sandals",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-
-```
-
-- Flats:
-```{r}
-# Flats
-flats <- shoes_price %>% 
-  select(id, category, prices) %>% 
-  filter(category == "flat")
-nrow(flats)
-
-dist_flats <- ggplot(flats) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of flats",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_flats) %>% 
-  layout(title = list(text = paste0("Price distribution of flats",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-```
-
-Putting graphs together in one page:
-```{r}
-grid.arrange(dist_boots, dist_flats, dist_sandals, nrow = 3)
-```
-
-In the combined grpah of three histograms, all three types have right-skewed distributions (pattern ingereted from the overall histogram). We can also notice that boots have a higher mean price than the other two types(proved by the mean table below).
-```{r}
-type <- c("boots", "flats", "sandals")
-type_mean <- c(mean(boots$prices),
-               mean(flats$prices),
-               mean(sandals$prices))
-
-data.frame(type, type_mean)
-```
-
-
-#### Price distribution for selected brands
-To select the sample among 391 distinct brands, we rank `brand` by their total number of ids listed in the dataset and the average prices of each brand, then choose top 4 with highest count. 
+#### Popular Brands
+To analyze the price trend among distinct brands, we create a list of popular brands by the number of shoe pairs in this dataset and the average price of each brand, both in descending order. Then we list the top 10 brands (see table below).
 ```{r}
 top_brand <- shoes_price %>% 
   group_by(brand) %>% 
   summarize(count = n(),
             brand_AVG = mean(prices, na.rm = TRUE)) %>% 
-  arrange(desc(count))
-top_brand
+  arrange(desc(count)) %>% 
+  head(10)
+
+top_tbl <- top_brand
+
+colnames(top_tbl) <- c("Brand", "Count", "Brand Average")
+
+png("top4.png")
+top4 <- tableGrob(top_tbl, rows = rownames(NA))
+grid.arrange(top4)
 ```
-This sample includes one brand with high average price (greater than $300), one with average smaller than the dataset average, and two with mean prices close to the dataset average. We plot interactive histograms for each brand below:
+The highest `count` of the pair number is 1002, which falls in Brinley Co.. There are two brands with extremely high brand averages (above \$100), SAS and L'artiste. The top 5 brands all have `count` above 400 pairs, but their brand averages vary alot. The next step is to compare the variance in prices for these brands.
 
-- Brainley C0.
+We make a box plot on `brand` (listed in alphabetical order of brand names), and the coral horizontal line is the mean price of all shoes in this dataset. 
 ```{r}
-## brinley ##
-brinley <- shoes_price %>% 
-  select(id, brand, prices) %>% 
-  filter(str_detect(brand, "brinley co."))
-nrow(brinley)
+shoes_price %>%
+ semi_join(top_brand, by = "brand") -> popBrands
 
-dist_brinley <- ggplot(brinley) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of Brinley Co.",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_brinley) %>% 
-  layout(title = list(text = paste0("Price distribution of Brinley Co.",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-
-```
-
-- SAS
-```{r}
-## sas ###
-sas <- shoes_price %>% 
-  select(id, brand, prices) %>% 
-  filter(str_detect(brand, "sas"))
-nrow(sas)
-
-dist_sas <- ggplot(sas) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of SAS",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_sas) %>% 
-  layout(title = list(text = paste0("Price distribution of SAS",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-
+ggplot(popBrands) +
+ geom_boxplot(aes(x = brand, y = prices, col = brand)) + 
+  scale_color_manual(values = c("#7C7F91", "#ADDED4", "#B5D4E9", "#C3CED9", 
+                               "#C9E4B4", "#CDBCB6", "#DBBDE5", "#F0C3A3",
+                               "#FBCDBE", "#FDDDAA")) +
+ labs(title = "Price Distribution by Brands",
+      x = "Brands",
+      y = "Price",
+      color = "Brand") +
+  geom_hline(yintercept = median(popBrands$prices, na.rm = TRUE), color = "indianred3", size = 0.5, alpha = 0.7) +
+  geom_text(x = 9, y = 330, label = "mean = 71.39", col = "ivory4") +
+    theme_classic() +
+ theme(axis.text.x = element_text(angle = 15))
 ```
 
-- Trotter
-```{r}
-## Trotter ##
-trotters <- shoes_price %>% 
-  select(id, brand, prices) %>% 
-  filter(str_detect(brand, "trotters"))
-nrow(trotters)
+The box structure in box plots represents where the middle 50% of the data points are, so we can cross-compare the distributions of top 10 brands by comparing the positions of boxes around the dataset average line. The majorities of SAS and L’artiste have prices larger than the dataset average, while these two brands also have the highest mean prices. Similarly, most shoes in Brinley Co. and Soda have small prices than the dataset average. 
 
-dist_trotters <- ggplot(trotters) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
+Some of the box plots illustrate the effect of the outliers. Keep focusing on L’artiste, we find that the middle 50% percentile, median, and mean prices are all much greater than the dataset mean, and this observation can be attributed to the effect of overall higher prices and outliers in L’artiste. In contrast, Areosoles, another brand with unignorable number of outliers, holds a mean price slightly higher than the dataset mean. Without looking at the box, we can infer that the majority of prices are smaller than the dataset mean, and the box plot confirms the implication (the median of Aerosoles is below the line). 
+
+#### Top 3 brands
+To get a snippet of the popular price range among popular shoe brands, we choose the top 3 brands (Brinley Co., SAS, and Trotters) and create a combined density plot (as an alternative of histograms) with vertical lines representing the brand means. 
+```{r}
+top3 <- top_brand[1:3, ]
+
+shoes_price %>%
+ semi_join(top3, by = "brand") -> sampleBrand
+
+ggdensity(sampleBrand, x = "prices", y = "..count..", rug = TRUE,
+   add = "mean",
+   add.params = list(color = c("#7C7F91", "#CDBCB6", "#FDDDAA"), linetype = "longdash", size = 1),
+   color = "brand", fill = "brand",
+   palette = c("#ADDED4", "#B5D4E9", "#DBBDE5"),
+   xlab = "Price", ylab = "Number of shoes",
+   title = "Price distribution of sample brands",
+   legend = "right") 
+```
+First, we would like to inspect the trends individually. The distributions of Brinley Co. and SAS are right-skewed, which is the effect out high value shoes. Trotters displays a relatively “binomial” distribution, because the prices tend to diverge to the edges instead of merging at the center. Then we observe two overlapping areas: one is [40, 60] and the other is [110, 160]. 
+
+We can define these two ranges as the “popular” ones based on the sample properties. Top 3 brands cover nearly 20% (*(1002 + 455 + 451)/9709*) of the shoes. Such portion of the data size can somehow reflect the retailer’s favor. Another interesting pattern in this sample is the relative location of price statistics (mean). Brinley Co. and SAS have extreme mean values (as we have mentioned in the box plot). Trotters has a mean of \$83, pretty close to the overall mean. This pattern makes the 3-observation sample quite representative; along with their popularities, we can conclude that the overlapped ranges are reliable to suggest the popular ranges.
+
+#### Overall Trend
+At the end of the price inspection, we plot a density graph for all shoe prices regardless of their categories and brands:
+```{r}
+dist_all <- ggdensity(shoes_price, x = "prices", y = "..count..",rug = TRUE, 
+          fill = "#ADDED4", color = "#ADDED4", alpha = 0.7,
+          add = "mean", 
+          add.params = list(color = "#7C7F91", linetype = "longdash", size = 1),
+          xlab = "Average Price", ylab = "Number of shoes",
+          main = "Price distribution of shoes") + 
   coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of Trotters",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_trotters) %>% 
-  layout(title = list(text = paste0("Price distribution of Trotters",
+  theme_classic()
+
+ggplotly(dist_all) %>% 
+  layout(title = list(text = paste0("Price distribution of shoes",
                                     "<br>",
-                                    "<sup>",
-                                    "price less than $500",
                                     "</sup>")))
 ```
-
-- Propet
-```{r}
-## Propret ##
-propet <- shoes_price %>% 
-  select(id, brand, prices) %>% 
-  filter(str_detect(brand, "propet"))
-nrow(propet)
-
-dist_propet<- ggplot(propet) + 
-  geom_histogram(aes(x = prices), 
-                 binwidth = 15, 
-                 col = 'white', 
-                 fill = 'darkseagreen3') + 
-  coord_cartesian(xlim = c(0, 300)) + 
-  labs(title = "Price distribution of Propet",
-       x = "Average price",
-       y = "Number of ids") + 
-  theme_bw() 
-ggplotly(dist_propet) %>% 
-  layout(title = list(text = paste0("Price distribution of Propet",
-                                    "<br>",
-                                    "<sup>",
-                                    "price less than $500",
-                                    "</sup>")))
-```
-
-Putting histograms together:
-```{r}
-grid.arrange(dist_brinley, dist_sas, dist_trotters, dist_propet, nrow = 2)
-```
-The average prices of Brinley Co., which is the most popular brand by number stocked, is relatively even-spreaded around the mean value (36 USD). Both SAS and Trotters has right-skewed distributions. Propet also has a right-skewed distribution, though the spread of prices is not continuous compared to other three. 
-
-Given this comparision, we can conclude that a larger sample size tends to employ a more "Normal" distribution, as we have learned from statistcs class. From the business perspective, these distributions and variations among brands can reflect preferences on shoes choices. We are doing backgroud reserch on these brands and will be able to provide a more precise conclusion in the final notebook.
+The overall trend is right-skewed, even after we have removed outliers (\$500 and above). As we have observed in the category box plot, most prices fall below \$100. So if we set \$100 as an upper bound to our data pool, the overall distribution would look more “normal”, which corresponds the statistical lemma that a larger sample size (compared to single brand trend) tends to display a more "Normal" distribution. Moreover, there are two density peaks, [45, 60] and [120, 150], which also overlaps with the popular range of Top 3 brands. Hence we can consider these ranges as “popular” to retailers.
 
 ------
-## Conclusion
 
+## Conclusions
+We have analyzed a sample of ~9,700 of online women's shoes listings and came to conclusion that most brands tend to offer more low prices shoes rather than high prices ones. Although some brands offer expensive shoes, they also have cheap options. This observation indicates that brands tend to target low to medium level income audience by offering "affordable prices". 
+
+We have also identified the price distributions in category and brand. The general distribution pattern is right-skewed. In terms of popular prices, brands usually keep their price interval less than \$350. We have also observed that the larger sample size tends to employ a more “Normal” distribution. 
+
+In addition, we have noticed some categorical trends. Black, white, shades and beige shoes keep earning favors in different seasons. Size 7 and 8 have a larger potential customer group. Most manufactures tend to launch new products in April and September. All these trends could reflect shoe industry's preference from 2015 to 2019, and fashion analysts could predict future trends with more research.
+
+Based on the summary, we would be able to provide some recommendations to those who are referring to `Women's Shoes` dataset. When purchasing products, retailers could focus more on black and white shoes, or other color tones in response to season change. They may also need to identify target groups of customers first to set price for shoes. Two frequent ranges, \$45 - \$60 and \$120 - \$150, can be references on customer's preference based on different types of shoes.
